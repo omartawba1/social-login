@@ -116,7 +116,7 @@ class Facebook
      */
     protected function getAccessTokenUrl()
     {
-        return $this->graphUrl . '/' . $this->graphVersion . '/oauth/access_token';
+        return $this->buildGraphUrl(). 'oauth/access_token';
     }
 
     /**
@@ -162,11 +162,10 @@ class Facebook
      */
     protected function buildUserDataUrl($token)
     {
-        $url = $this->graphUrl . '/' . $this->graphVersion
-            . '/me?access_token=' . $token . '&fields=' . implode(',', $this->fields);
+        $url = $this->buildGraphUrl() . 'me?access_token=' . $token . '&fields=' . implode(',', $this->fields);
 
         $appSecretProof = hash_hmac('sha256', $token, $this->appSecret);
-        $url           .= '&appsecret_proof=' . $appSecretProof;
+        $url .= '&appsecret_proof=' . $appSecretProof;
 
         return $url;
     }
@@ -197,19 +196,29 @@ class Facebook
      *
      * @param $userData
      *
-     * @return mixed
+     * @return User
      */
     public function buildUserObject($userData)
     {
         $user            = User::firstOrNew(['email' => $userData['email']]);
         $user->name      = $userData['name'];
         $user->uid       = $userData['id'];
-        $user->picture   = $this->graphUrl . '/' . $this->graphVersion . '/' . $user->uid . '/picture?width=175';
+        $user->picture   = $this->buildGraphUrl() . $user->uid . '/picture?width=175';
         $user->is_active = 1;
         $user->token     = session('token');
         $user->provider  = 'facebook';
         $user->save();
 
         return $user;
+    }
+
+    /**
+     * Build Facebook Graph url
+     *
+     * @return string
+     */
+    protected function buildGraphUrl()
+    {
+        return $this->graphUrl . '/' . $this->graphVersion . '/';
     }
 }
